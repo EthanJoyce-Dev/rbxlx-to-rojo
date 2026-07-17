@@ -1253,11 +1253,42 @@ rbx-dom may require changes to fully support this property. Please open an issue
                         add_property(instance, &property, net_asset.into());
                     }
                 }
+                // Older binary files stored Tags as SharedString before a
+                // dedicated Tags type existed. Decode the shared string bytes
+                // as Tags so the file can still be read.
+                VariantType::Tags => {
+                    let values = chunk.read_interleaved_u32_array(type_info.referents.len())?;
+
+                    for (value, referent) in values.zip(&type_info.referents) {
+                        let shared_string =
+                            self.shared_strings.get(value as usize).ok_or_else(|| {
+                                InnerError::InvalidPropData {
+                                    type_name: type_info.type_name.to_string(),
+                                    prop_name: prop_name.clone(),
+                                    valid_value: "a valid SharedString containing Tags data",
+                                    actual_value: format!("{value:?}"),
+                                }
+                            })?;
+
+                        let tags = Tags::decode(shared_string.data()).map_err(|_| {
+                            InnerError::InvalidPropData {
+                                type_name: type_info.type_name.to_string(),
+                                prop_name: prop_name.clone(),
+                                valid_value: "a list of valid null-delimited UTF-8 strings",
+                                actual_value: "invalid UTF-8".to_string(),
+                            }
+                        })?;
+
+                        let instance = self.instances_by_ref.get_mut(referent).unwrap();
+
+                        add_property(instance, &property, tags.into());
+                    }
+                }
                 invalid_type => {
                     return Err(InnerError::PropTypeMismatch {
                         type_name: type_info.type_name.to_string(),
                         prop_name,
-                        valid_type_names: "SharedString",
+                        valid_type_names: "SharedString or Tags",
                         actual_type_name: format!("{invalid_type:?}"),
                     })
                 }
