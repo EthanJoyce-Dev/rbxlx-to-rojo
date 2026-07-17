@@ -6,23 +6,26 @@ on:
   pull_request:
     branches:
     - master
+  workflow_dispatch:
+
 jobs:
   build_windows:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
     - name: Build (All features)
       run: |
         cargo build --locked --release --all-features
-    - name: Upload selene
-      uses: actions/upload-artifact@v1
+    - name: Upload rbxlx-to-rojo
+      uses: actions/upload-artifact@v4
       with:
         name: rbxlx-to-rojo-windows
         path: ./target/release/rbxlx-to-rojo.exe
+
   build_mac:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
     - name: Install Rust
       run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
     - name: Build (All features)
@@ -30,7 +33,7 @@ jobs:
         source $HOME/.cargo/env
         cargo build --locked --release --all-features
     - name: Upload rbxlx-to-rojo
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v4
       with:
         name: rbxlx-to-rojo-macos
         path: ./target/release/rbxlx-to-rojo
