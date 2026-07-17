@@ -83,7 +83,13 @@ impl InstructionReader for VirtualFileSystem {
                                 .expect("couldn't decode encoded xml");
                             let child_id = tree.root().children()[0];
                             let child_instance = tree.get_by_ref(child_id).unwrap().clone();
-                            VirtualFileContents::Instance(child_instance.properties.to_owned())
+                            VirtualFileContents::Instance(
+                                child_instance
+                                    .properties
+                                    .iter()
+                                    .map(|(k, v)| (k.to_string(), v.clone()))
+                                    .collect(),
+                            )
                         } else {
                             VirtualFileContents::Bytes(contents_string)
                         },
